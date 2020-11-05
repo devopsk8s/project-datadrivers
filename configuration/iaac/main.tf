@@ -130,17 +130,6 @@ resource "azurerm_key_vault" "az_key_vault" {
 }
 
 //Key Vault policy
-resource "azurerm_key_vault_access_policy" "key_vault_access_policy_data_factory" {
-  key_vault_id            = azurerm_key_vault.az_key_vault.id
-  tenant_id               = azurerm_data_factory.az_data_factory.identity[0].tenant_id
-  object_id               = azurerm_data_factory.az_data_factory.identity[0].principal_id
-  key_permissions         = var.kv_key_permissions_read
-  secret_permissions      = var.kv_secret_permissions_read
-  certificate_permissions = var.kv_certificate_permissions_read
-  storage_permissions     = var.kv_storage_permissions_read
-  depends_on              = [azurerm_key_vault.az_key_vault]
-}
-
 resource "azurerm_key_vault_access_policy" "default_policy" {
   key_vault_id = azurerm_key_vault.az_key_vault.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
@@ -155,6 +144,17 @@ resource "azurerm_key_vault_access_policy" "default_policy" {
   depends_on              = [azurerm_key_vault.az_key_vault]
 }
 
+resource "azurerm_key_vault_access_policy" "key_vault_access_policy_data_factory" {
+  key_vault_id            = azurerm_key_vault.az_key_vault.id
+  tenant_id               = azurerm_data_factory.az_data_factory.identity[0].tenant_id
+  object_id               = azurerm_data_factory.az_data_factory.identity[0].principal_id
+  key_permissions         = var.kv_key_permissions_read
+  secret_permissions      = var.kv_secret_permissions_read
+  certificate_permissions = var.kv_certificate_permissions_read
+  storage_permissions     = var.kv_storage_permissions_read
+  depends_on              = [azurerm_key_vault.az_key_vault]
+}
+
 resource "azurerm_key_vault_access_policy" "service_principal_policy" {
   depends_on   = [azurerm_key_vault.az_key_vault]
   key_vault_id = azurerm_key_vault.az_key_vault.id
@@ -163,14 +163,14 @@ resource "azurerm_key_vault_access_policy" "service_principal_policy" {
   lifecycle {
     create_before_destroy = true
   }
-  key_permissions         = var.kv_key_permissions_read
-  secret_permissions      = var.kv_secret_permissions_read
-  certificate_permissions = var.kv_certificate_permissions_read
-  storage_permissions     = var.kv_storage_permissions_read
+  key_permissions         = var.kv_key_permissions_full
+  secret_permissions      = var.kv_secret_permissions_full
+  certificate_permissions = var.kv_certificate_permissions_full
+  storage_permissions     = var.kv_storage_permissions_full
 }
 
 resource "azurerm_key_vault_secret" "az_storage_key" {
-  depends_on   = [azurerm_key_vault_access_policy.default_policy]
+  depends_on   = [azurerm_key_vault_access_policy.default_policy, azurerm_key_vault_access_policy.service_principal_policy]
   name         = var.storage_key_name
   value        = azurerm_storage_account.az_storage_account.primary_access_key
   key_vault_id = azurerm_key_vault.az_key_vault.id
