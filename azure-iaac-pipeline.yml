@@ -1,0 +1,87 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  location: 'westeurope'
+  terraform_destroy: true
+  tier_down: false
+  project_name: 'datadriversproj'
+  environment: 'qa'
+#   environment: <dev|test|qa|prod>
+#   subscription_id: <subscription_id>
+#   tenant_id: <client_id>
+#   client_id: <client_id>
+#   client_secret: <client_secret>
+#   service_principal_object_id: <service principal object id of azure devops service connection> ##<az ad sp list --filter "displayName eq 'displayName from Active Directory RegisteredApps'"> Assign OWNER rights to service principal of azure devops connection - https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal
+#   backendType: <backend type>
+#   backendServiceArm: <manager service connection> #Service connection name between Azure Devops and Azure Portal
+#   backendAzureRmResourceGroupName: <backend resource group name>
+#   backendAzureRmResourceGroupLocation: <backend resource group location>
+#   backendAzureRmStorageAccountName: <backend storage account name>
+#   backendAzureRmContainerName: <backend container name>
+#   backendAzureRmKey: <backend .tfstate file name>
+#   environmentServiceName: <manager service connection> #Service connection name between Azure Devops and Azure Portal
+
+steps:
+- script: echo Hello, Terraform Datadrivers!
+  displayName: 'Run a one-line script'
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: 'configuration/iaac'
+    Contents: '**'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container' 
+
+- task: TerraformCLI@0
+  displayName: "Terraform init"
+  inputs:
+    command: 'init'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac'
+    backendType: 'azurerm'
+    backendServiceArm: 'service-connection'
+    ensureBackend: true
+    backendAzureRmResourceGroupName: '$(project_name)-terraform-backend-rg'
+    backendAzureRmResourceGroupLocation: $(location)
+    backendAzureRmStorageAccountName: '$(project_name)account'
+    backendAzureRmContainerName: '$(project_name)-backend-storage-container'
+    backendAzureRmKey: '$(env).terraform.tfstate'
+
+- task: TerraformCLI@0
+  displayName: "Terraform validate"
+  inputs:
+    command: 'validate'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac'
+
+- task: TerraformCLI@0
+  displayName: "Terraform plan"
+  inputs:
+    command: 'plan'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac'
+    environmentServiceName: 'service-connection'
+    commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var subscription_id=$(subscription_id) -var tenant_id=$(tenant_id) -var service_principal_object_id=$(service_principal_object_id) -var-file=./env/$(environment)/variables.tfvars'
+
+- task: TerraformCLI@0
+  displayName: "Terraform apply"
+  inputs:
+    command: 'apply'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac'
+    environmentServiceName: 'service-connection'
+    commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var subscription_id=$(subscription_id) -var tenant_id=$(tenant_id) -var service_principal_object_id=$(service_principal_object_id) -var-file=./env/$(environment)/variables.tfvars'
+
+- task: TerraformCLI@0
+  displayName: "Terraform destroy"
+  condition: or(eq(variables['tier_down'], 'true'), and(eq(variables['terraform_destroy'], 'true'), eq(variables['Agent.JobStatus'], 'SucceededWithIssues')), eq(variables['Agent.JobStatus'], 'Failed'))
+  inputs:
+    command: 'destroy'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac'
+    environmentServiceName: 'service-connection'
+    commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var subscription_id=$(subscription_id) -var tenant_id=$(tenant_id) -var service_principal_object_id=$(service_principal_object_id) -var-file=./env/$(environment)/variables.tfvars'

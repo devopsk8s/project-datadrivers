@@ -1,0 +1,38 @@
+{
+        "factoryName": {
+            "value": "${factoryName}"
+        },
+        "keyVaultReferenceName": {
+            "value": "${keyVaultReferenceName}"
+        },
+        "linked_properties_typeProperties_url": {
+            "Value": "${linked_properties_typeProperties_url}"
+        },                      
+        "secretName": {
+            "Value": "${secretName}"
+        },
+        "secretVersion": {
+            "Value": "${secretVersion}"
+        },          
+        "AzureBlobStorageLinkedService": {
+            "Value": "${AzureBlobStorageLinkedService}"
+        },
+        "linked_properties_typeProperties_tenant": {
+            "Value": "${linked_properties_typeProperties_tenant}"
+        },
+        "linked_properties_typeProperties_servicePrincipalId": {
+            "Value": "${linked_properties_typeProperties_servicePrincipalId}"
+        },   
+        "pipelineName": {
+            "Value": "${pipelineName}"
+        },
+        "activityName": {
+            "Value": "${activityName}"
+        },
+        "inputDataset": {
+            "Value": "${inputDataset}"
+        },
+        "outputDataset": {
+            "Value": "${outputDataset}"
+        }
+}

@@ -1,0 +1,68 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "[parameters('factoryName')]"
+        },
+        "linked_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "[parameters('linked_properties_typeProperties_url')]"
+        },
+        "keyVaultReferenceName": {
+            "type": "string",
+            "metadata": "Key Vault reference name",
+            "defaultValue": "[parameters('keyVaultReferenceName')]"
+        },
+        "secretName": {
+            "type": "string",
+            "metadata": "Key Vault secret name",
+            "defaultValue": "[parameters('secretName')]"
+        },
+        "secretVersion": {
+            "type": "string",
+            "metadata": "Key Vault secret version",
+            "defaultValue": "[parameters('secretVersion')]"
+        },
+        "AzureBlobStorageLinkedService": {
+            "type": "string",
+            "metadata": "AzureBlobStorage linked service",
+            "defaultValue": "[parameters('AzureBlobStorageLinkedService')]"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/', parameters('AzureBlobStorageLinkedService'))]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('linked_properties_typeProperties_url')]",                 
+                    "accountKey": {
+                        "type": "AzureKeyVaultSecret",
+                        "store": {
+                            "referenceName": "[parameters('keyVaultReferenceName')]",
+                            "type": "LinkedServiceReference"
+                        },
+                        "secretName": "[parameters('secretName')]",
+                        "secretVersion": "[parameters('secretVersion')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        }
+    ],
+    "outputs": {
+        "linkedServiceId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('factoryName'),  parameters('AzureBlobStorageLinkedService'))]"
+        }
+    }    
+}
