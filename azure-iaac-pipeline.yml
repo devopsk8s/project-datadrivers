@@ -7,7 +7,7 @@ pool:
 variables:
   location: 'westeurope'
   terraform_destroy: true
-  tier_down: true
+  tier_down: false
   project_name: 'datadriversproj'
   environment: 'qa'
 #   environment: <dev|test|qa|prod>
